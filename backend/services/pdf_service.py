@@ -24,27 +24,22 @@ class PDFService:
         self.styles = self._create_styles()
         self.chart_service = ChartService()
     
-    def _setup_fonts(self):
-        """한글 폰트 설정"""
-        try:
-            # 시스템 폰트 경로들
-            font_paths = [
-                "C:/Windows/Fonts/malgun.ttf",  # 맑은 고딕
-                "C:/Windows/Fonts/NanumGothic.ttf",  # 나눔고딕
-                "/System/Library/Fonts/AppleGothic.ttf",  # macOS
-                "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",  # Linux
-            ]
-            
-            for font_path in font_paths:
-                if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont('Korean', font_path))
-                    break
-            else:
-                # 폰트를 찾을 수 없으면 기본 폰트 사용
-                print("Warning: Korean font not found, using default font")
-                
-        except Exception as e:
-            print(f"Font setup error: {e}")
+def _setup_fonts(self):
+    """한글 폰트 설정"""
+    try:
+        font_paths = [
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Render 경로
+            "C:/Windows/Fonts/malgun.ttf",
+            "/System/Library/Fonts/AppleGothic.ttf",
+            "/usr/share/fonts/truetype/noto-cjk/NotoSansCJK-Regular.ttc",
+        ]
+        
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('Korean', font_path))
+                break
+    except Exception as e:
+        print(f"Font setup error: {e}")
     
     def _create_styles(self):
         """PDF 스타일 생성"""

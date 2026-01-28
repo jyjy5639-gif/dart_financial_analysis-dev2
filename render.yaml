@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: dart-backend
+    env: python
+    buildCommand: pip install -r requirements.txt && apt-get update && apt-get install -y fonts-noto-cjk
+    startCommand: python run_backend.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12
