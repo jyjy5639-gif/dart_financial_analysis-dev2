@@ -1,0 +1,47 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+*.csv
+*.xlsx
+*.xls
+krx_codes.csv
+.dart_config.json
+
+# Logs
+logs/
+*.log
+
+# Streamlit
+.streamlit/
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+test/

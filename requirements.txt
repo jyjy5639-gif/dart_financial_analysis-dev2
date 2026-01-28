@@ -1,0 +1,52 @@
+# Backend
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-multipart==0.0.18
+
+# HTTP Clients
+httpx==0.28.1
+requests==2.32.3
+aiohttp==3.11.11
+
+# Data Processing
+pandas==2.2.3
+openpyxl==3.1.5
+
+# LLM Providers
+google-generativeai==0.8.3
+openai==1.57.2
+anthropic==0.42.0
+
+# Web Scraping
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# XML Processing
+# (built-in xml.etree.ElementTree)
+
+# Environment
+python-dotenv==1.0.1
+
+# Frontend
+streamlit==1.41.1
+
+# PDF Generation
+reportlab==4.2.5
+weasyprint==63.1
+
+# Visualization
+plotly==5.23.0
+matplotlib==3.9.2
+seaborn==0.13.2
+kaleido==0.2.1
+
+# Utils
+urllib3==2.2.3
+
+# Development
+pytest==8.3.4
+pytest-asyncio==0.24.0
+black==24.10.0
+ruff==0.8.4
