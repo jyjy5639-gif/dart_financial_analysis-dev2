@@ -20,7 +20,7 @@ class PDFService:
     """AI 브리핑 PDF 생성 서비스 (차트 포함)"""
     
     def __init__(self):
-        self._setup_fonts()
+        #self._setup_fonts()
         self.styles = self._create_styles()
         self.chart_service = ChartService()
     
