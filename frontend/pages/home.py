@@ -2,16 +2,15 @@ import streamlit as st
 from pathlib import Path
 from PIL import Image
 import os
+import sys
 
-# home.py는 frontend/pages/ 안에 있으므로 부모의 부모의 static
-icon_path = Path(__file__).parent.parent.parent / "static" / "fine_icon.ico"
+# frontend 폴더를 경로에 추가
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-st.set_page_config(
-    page_title="화인 DART 재무정보 분석기",
-    page_icon=str(icon_path) if icon_path.exists() else "🎯",
-    layout="wide"
-)
+from api_client import APIClient
 
+# icon_path 정의
+icon_path = Path(__file__).parent.parent / "static" / "fine.png"
 
 # 헬퍼 함수: 유효한 API 키인지 확인
 def is_valid_api_key(key):
