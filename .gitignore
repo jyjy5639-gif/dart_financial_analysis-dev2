@@ -39,6 +39,7 @@ logs/
 
 # Streamlit
 .streamlit/
+frontend/.streamlit/secrets.toml
 
 # Test
 .pytest_cache/
