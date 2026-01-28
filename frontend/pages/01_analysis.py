@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
-from frontend.api_client import APIClient
+import sys
 from pathlib import Path
+
+# frontend 폴더를 경로에 추가
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from api_client import APIClient
 import base64
 import plotly.graph_objects as go
 import plotly.express as px
