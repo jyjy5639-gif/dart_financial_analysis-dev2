@@ -45,3 +45,4 @@ logs/
 .coverage
 htmlcov/
 test/
+/dart2
