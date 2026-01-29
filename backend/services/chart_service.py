@@ -1,4 +1,5 @@
 import os
+import platform
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -6,6 +7,7 @@ import pandas as pd
 from typing import Dict, List, Optional, Tuple
 import base64
 from io import BytesIO
+from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import seaborn as sns
@@ -13,51 +15,96 @@ import numpy as np
 
 
 class ChartService:
-    """재무 데이터 시각화 서비스"""
+    """재무 데이터 시각화 서비스 - 모든 환경 지원"""
     
     def __init__(self):
         self._setup_matplotlib()
         self._setup_plotly()
     
     def _setup_matplotlib(self):
-        """Matplotlib 한글 폰트 설정 - C드라이브 Noto Sans KR 사용"""
+        """Matplotlib 한글 폰트 설정 - Windows/Linux/Mac/클라우드 모두 지원"""
         plt.rcParams['axes.unicode_minus'] = False
         
-        # Windows C드라이브 기본 경로
-        font_path = "C:/Windows/Fonts/NotoSansKR-Regular.otf"
-        
         font_registered = False
+        current_system = platform.system()
         
-        if os.path.exists(font_path):
-            try:
-                fm.fontManager.addfont(font_path)
+        print(f"Matplotlib 폰트 설정 시작 (OS: {current_system})")
+        
+        # 1. 프로젝트 내 폰트 확인 (모든 환경에서 작동)
+        try:
+            project_root = Path(__file__).parent.parent.parent
+            project_font = project_root / "fonts" / "NotoSansKR-Regular.ttf"
+            
+            if project_font.exists():
+                fm.fontManager.addfont(str(project_font))
                 plt.rcParams['font.family'] = 'NotoSansKR'
                 font_registered = True
-                print(f"Matplotlib 폰트 로드 성공: {font_path}")
-            except Exception as e:
-                print(f"Matplotlib 폰트 로드 실패: {e}")
-        else:
-            # 대체 경로 시도
-            alt_paths = [
-                "C:/Windows/Fonts/NotoSansKR-Medium.otf",
-                "C:/Users/Fonts/NotoSansKR-Regular.otf",
+                print(f"✅ Matplotlib 폰트 로드 (프로젝트): {project_font}")
+                return
+            else:
+                print(f"프로젝트 폰트 찾을 수 없음: {project_font}")
+        except Exception as e:
+            print(f"프로젝트 폰트 로드 실패: {e}")
+        
+        # 2. OS별 기본 경로
+        if current_system == "Windows":
+            windows_paths = [
+                "C:/Windows/Fonts/NotoSansKR-Regular.ttf",
+                "C:/Windows/Fonts/NotoSansKR-Medium.ttf",
             ]
-            
-            for alt_path in alt_paths:
-                if os.path.exists(alt_path):
+            for path in windows_paths:
+                if os.path.exists(path):
                     try:
-                        fm.fontManager.addfont(alt_path)
+                        fm.fontManager.addfont(path)
                         plt.rcParams['font.family'] = 'NotoSansKR'
                         font_registered = True
-                        print(f"Matplotlib 폰트 로드 성공: {alt_path}")
-                        break
+                        print(f"✅ Matplotlib 폰트 로드 (Windows): {path}")
+                        return
                     except Exception as e:
-                        print(f"폰트 로드 실패: {alt_path}, {e}")
+                        print(f"Windows 폰트 로드 실패: {e}")
         
+        elif current_system == "Darwin":  # macOS
+            mac_paths = [
+                "/Library/Fonts/NotoSansKR-Regular.ttf",
+                "/System/Library/Fonts/NotoSansKR-Regular.ttf",
+                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.ttf",
+            ]
+            for path in mac_paths:
+                if os.path.exists(path):
+                    try:
+                        fm.fontManager.addfont(path)
+                        plt.rcParams['font.family'] = 'NotoSansKR'
+                        font_registered = True
+                        print(f"✅ Matplotlib 폰트 로드 (macOS): {path}")
+                        return
+                    except Exception as e:
+                        print(f"macOS 폰트 로드 실패: {e}")
+        
+        else:  # Linux (Render, Streamlit Cloud)
+            linux_paths = [
+                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.ttf",
+                "/usr/share/fonts/noto-cjk/NotoSansCJKkr-Regular.ttf",
+            ]
+            for path in linux_paths:
+                if os.path.exists(path):
+                    try:
+                        fm.fontManager.addfont(path)
+                        plt.rcParams['font.family'] = 'NotoSansKR'
+                        font_registered = True
+                        print(f"✅ Matplotlib 폰트 로드 (Linux): {path}")
+                        return
+                    except Exception as e:
+                        print(f"Linux 폰트 로드 실패: {e}")
+        
+        # 3. 폰트 로드 실패 시
         if not font_registered:
-            print(f"경고: Noto Sans KR 폰트를 찾을 수 없습니다.")
-            print(f"  예상 경로: {font_path}")
-            print(f"  기본 폰트(DejaVu Sans)를 사용합니다.")
+            print("⚠️ 경고: NotoSansKR 폰트를 찾을 수 없습니다.")
+            print(f"   OS: {current_system}")
+            print(f"   프로젝트 루트: {Path(__file__).parent.parent.parent}")
+            print(f"   현재 작업 디렉토리: {os.getcwd()}")
+            print("   기본 폰트(DejaVu Sans)를 사용합니다.")
             plt.rcParams['font.family'] = ['DejaVu Sans']
     
     def _setup_plotly(self):

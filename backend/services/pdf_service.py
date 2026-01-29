@@ -17,7 +17,7 @@ from backend.services.chart_service import ChartService
 
 
 class PDFService:
-    """AI 브리핑 PDF 생성 서비스 (차트 포함)"""
+    """AI 브리핑 PDF 생성 서비스 (차트 포함) - 모든 환경 지원"""
     
     def __init__(self):
         self._setup_fonts()
@@ -25,32 +25,60 @@ class PDFService:
         self.chart_service = ChartService()
     
     def _setup_fonts(self):
-        """한글 폰트 설정 - C드라이브 Fonts 폴더의 Noto Sans KR 사용"""
+        """한글 폰트 설정 - Windows/Linux/Mac/클라우드 모두 지원"""
         try:
-            # Windows C드라이브 기본 경로
-            font_path = "C:/Windows/Fonts/NotoSansKR-Regular.otf"
+            # 1. 프로젝트 내 폰트 확인 (모든 환경에서 작동)
+            project_root = Path(__file__).parent.parent.parent
+            project_font = project_root / "fonts" / "NotoSansKR-Regular.ttf"
             
-            if os.path.exists(font_path):
-                pdfmetrics.registerFont(TTFont('NotoSansKR', font_path))
-                print(f"폰트 로드 성공: {font_path}")
-            else:
-                # 대체 경로 목록
-                alt_paths = [
-                    "C:/Windows/Fonts/NotoSansKR-Medium.otf",
-                    "C:/Users/Fonts/NotoSansKR-Regular.otf",
-                ]
-                
-                for alt_path in alt_paths:
-                    if os.path.exists(alt_path):
-                        pdfmetrics.registerFont(TTFont('NotoSansKR', alt_path))
-                        print(f"폰트 로드 성공: {alt_path}")
-                        return
-                
-                print(f"경고: 한글 폰트를 찾을 수 없습니다. 기본 폰트를 사용합니다.")
-                print(f"  예상 경로: {font_path}")
-                
+            if project_font.exists():
+                pdfmetrics.registerFont(TTFont('NotoSansKR', str(project_font)))
+                print(f"✅ PDFService 폰트 로드 (프로젝트): {project_font}")
+                return
+            
+            print(f"프로젝트 폰트 찾을 수 없음: {project_font}")
+            
+            # 2. Windows 경로 시도
+            windows_paths = [
+                "C:/Windows/Fonts/NotoSansKR-Regular.ttf",
+                "C:/Windows/Fonts/NotoSansKR-Medium.ttf",
+            ]
+            for path in windows_paths:
+                if os.path.exists(path):
+                    pdfmetrics.registerFont(TTFont('NotoSansKR', path))
+                    print(f"✅ PDFService 폰트 로드 (Windows): {path}")
+                    return
+            
+            # 3. Linux 경로 시도
+            linux_paths = [
+                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.ttf",
+            ]
+            for path in linux_paths:
+                if os.path.exists(path):
+                    pdfmetrics.registerFont(TTFont('NotoSansKR', path))
+                    print(f"✅ PDFService 폰트 로드 (Linux): {path}")
+                    return
+            
+            # 4. macOS 경로 시도
+            mac_paths = [
+                "/Library/Fonts/NotoSansKR-Regular.ttf",
+                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.ttf",
+            ]
+            for path in mac_paths:
+                if os.path.exists(path):
+                    pdfmetrics.registerFont(TTFont('NotoSansKR', path))
+                    print(f"✅ PDFService 폰트 로드 (macOS): {path}")
+                    return
+            
+            print("⚠️ 경고: NotoSansKR 폰트를 찾을 수 없습니다.")
+            print(f"   프로젝트 폰트 경로: {project_font}")
+            print(f"   프로젝트 루트 경로: {project_root}")
+            print(f"   현재 작업 디렉토리: {os.getcwd()}")
+            
         except Exception as e:
-            print(f"폰트 설정 오류: {e}")
+            print(f"❌ PDFService 폰트 설정 오류: {e}")
     
     def _create_styles(self):
         """PDF 스타일 생성"""
