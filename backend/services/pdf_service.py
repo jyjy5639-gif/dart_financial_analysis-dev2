@@ -29,7 +29,7 @@ class PDFService:
         try:
             # 1. 프로젝트 내 폰트 확인 (모든 환경에서 작동)
             project_root = Path(__file__).parent.parent.parent
-            project_font = project_root / "fonts" / "NotoSansKR-Regular.otf"
+            project_font = project_root / "fonts" / "NotoSansKR-Regular.ttf"
             
             if project_font.exists():
                 pdfmetrics.registerFont(TTFont('NotoSansKR', str(project_font)))
@@ -40,8 +40,8 @@ class PDFService:
             
             # 2. Windows 경로 시도
             windows_paths = [
-                "C:/Windows/Fonts/NotoSansKR-Regular.otf",
-                "C:/Windows/Fonts/NotoSansKR-Medium.otf",
+                "C:/Windows/Fonts/NotoSansKR-Regular.ttf",
+                "C:/Windows/Fonts/NotoSansKR-Medium.ttf",
             ]
             for path in windows_paths:
                 if os.path.exists(path):
@@ -51,9 +51,9 @@ class PDFService:
             
             # 3. Linux 경로 시도
             linux_paths = [
-                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.otf",
-                "/usr/share/fonts/noto/NotoSansKR-Regular.otf",
-                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.otf",
+                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/noto/NotoSansKR-Regular.ttf",
+                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.ttf",
             ]
             for path in linux_paths:
                 if os.path.exists(path):
@@ -63,8 +63,8 @@ class PDFService:
             
             # 4. macOS 경로 시도
             mac_paths = [
-                "/Library/Fonts/NotoSansKR-Regular.otf",
-                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.otf",
+                "/Library/Fonts/NotoSansKR-Regular.ttf",
+                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.ttf",
             ]
             for path in mac_paths:
                 if os.path.exists(path):
@@ -135,7 +135,7 @@ class PDFService:
         financial_summary: Optional[Dict] = None,
         llm_provider: str = "AI",
         analysis_style: str = "standard",
-        include_charts: bool = True
+        include_charts: bool = False
     ) -> BytesIO:
         """
         AI 브리핑 PDF 생성 (차트 포함)
