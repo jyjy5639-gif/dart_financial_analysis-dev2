@@ -1,3 +1,4 @@
+import os
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -19,25 +20,45 @@ class ChartService:
         self._setup_plotly()
     
     def _setup_matplotlib(self):
-        """Matplotlib 한글 폰트 설정"""
-        plt.rcParams['font.family'] = ['DejaVu Sans', 'Malgun Gothic', 'NanumGothic']
+        """Matplotlib 한글 폰트 설정 - C드라이브 Noto Sans KR 사용"""
         plt.rcParams['axes.unicode_minus'] = False
         
-        # 한글 폰트 찾기
-        font_paths = [
-            "C:/Windows/Fonts/malgun.ttf",  # 맑은 고딕
-            "C:/Windows/Fonts/NanumGothic.ttf",  # 나눔고딕
-        ]
+        # Windows C드라이브 기본 경로
+        font_path = "C:/Windows/Fonts/NotoSansKR-Regular.otf"
         
-        for font_path in font_paths:
+        font_registered = False
+        
+        if os.path.exists(font_path):
             try:
-                import os
-                if os.path.exists(font_path):
-                    font_prop = fm.FontProperties(fname=font_path)
-                    plt.rcParams['font.family'] = font_prop.get_name()
-                    break
-            except:
-                pass
+                fm.fontManager.addfont(font_path)
+                plt.rcParams['font.family'] = 'NotoSansKR'
+                font_registered = True
+                print(f"Matplotlib 폰트 로드 성공: {font_path}")
+            except Exception as e:
+                print(f"Matplotlib 폰트 로드 실패: {e}")
+        else:
+            # 대체 경로 시도
+            alt_paths = [
+                "C:/Windows/Fonts/NotoSansKR-Medium.otf",
+                "C:/Users/Fonts/NotoSansKR-Regular.otf",
+            ]
+            
+            for alt_path in alt_paths:
+                if os.path.exists(alt_path):
+                    try:
+                        fm.fontManager.addfont(alt_path)
+                        plt.rcParams['font.family'] = 'NotoSansKR'
+                        font_registered = True
+                        print(f"Matplotlib 폰트 로드 성공: {alt_path}")
+                        break
+                    except Exception as e:
+                        print(f"폰트 로드 실패: {alt_path}, {e}")
+        
+        if not font_registered:
+            print(f"경고: Noto Sans KR 폰트를 찾을 수 없습니다.")
+            print(f"  예상 경로: {font_path}")
+            print(f"  기본 폰트(DejaVu Sans)를 사용합니다.")
+            plt.rcParams['font.family'] = ['DejaVu Sans']
     
     def _setup_plotly(self):
         """Plotly 기본 설정"""

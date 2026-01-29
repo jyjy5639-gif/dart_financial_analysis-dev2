@@ -20,26 +20,37 @@ class PDFService:
     """AI 브리핑 PDF 생성 서비스 (차트 포함)"""
     
     def __init__(self):
-        #self._setup_fonts()
+        self._setup_fonts()
         self.styles = self._create_styles()
         self.chart_service = ChartService()
     
     def _setup_fonts(self):
-        """한글 폰트 설정"""
+        """한글 폰트 설정 - C드라이브 Fonts 폴더의 Noto Sans KR 사용"""
         try:
-            font_paths = [
-                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Render 경로
-                "C:/Windows/Fonts/malgun.ttf",
-                "C:/Windows/Fonts/Noto Sans KR.ttf",
-                "/usr/share/fonts/truetype/noto-cjk/NotoSansCJK-Regular.ttc",
-            ]
+            # Windows C드라이브 기본 경로
+            font_path = "C:/Windows/Fonts/NotoSansKR-Regular.otf"
             
-            for font_path in font_paths:
-                if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont('Korean', font_path))
-                    break
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('NotoSansKR', font_path))
+                print(f"폰트 로드 성공: {font_path}")
+            else:
+                # 대체 경로 목록
+                alt_paths = [
+                    "C:/Windows/Fonts/NotoSansKR-Medium.otf",
+                    "C:/Users/Fonts/NotoSansKR-Regular.otf",
+                ]
+                
+                for alt_path in alt_paths:
+                    if os.path.exists(alt_path):
+                        pdfmetrics.registerFont(TTFont('NotoSansKR', alt_path))
+                        print(f"폰트 로드 성공: {alt_path}")
+                        return
+                
+                print(f"경고: 한글 폰트를 찾을 수 없습니다. 기본 폰트를 사용합니다.")
+                print(f"  예상 경로: {font_path}")
+                
         except Exception as e:
-            print(f"Font setup error: {e}")
+            print(f"폰트 설정 오류: {e}")
     
     def _create_styles(self):
         """PDF 스타일 생성"""
@@ -49,7 +60,7 @@ class PDFService:
         styles.add(ParagraphStyle(
             name='KoreanTitle',
             parent=styles['Title'],
-            fontName='Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica-Bold',
+            fontName='NotoSansKR',
             fontSize=18,
             spaceAfter=20,
             textColor=HexColor('#1f4e79'),
@@ -60,7 +71,7 @@ class PDFService:
         styles.add(ParagraphStyle(
             name='KoreanHeading',
             parent=styles['Heading2'],
-            fontName='Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica-Bold',
+            fontName='NotoSansKR',
             fontSize=14,
             spaceAfter=12,
             textColor=HexColor('#2c5282'),
@@ -71,7 +82,7 @@ class PDFService:
         styles.add(ParagraphStyle(
             name='KoreanBody',
             parent=styles['Normal'],
-            fontName='Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica',
+            fontName='NotoSansKR',
             fontSize=10,
             leading=14,
             spaceAfter=8,
@@ -83,7 +94,7 @@ class PDFService:
         styles.add(ParagraphStyle(
             name='Metadata',
             parent=styles['Normal'],
-            fontName='Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica',
+            fontName='NotoSansKR',
             fontSize=9,
             textColor=HexColor('#666666'),
             alignment=TA_RIGHT
@@ -304,7 +315,7 @@ class PDFService:
         
         meta_table = Table(metadata, colWidths=[3*cm, 8*cm])
         meta_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), 'NotoSansKR'),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -340,7 +351,7 @@ class PDFService:
             
             metrics_table = Table(metrics_data, colWidths=[4*cm, 3*cm, 3*cm, 2*cm])
             metrics_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Korean' if 'Korean' in [f.fontName for f in pdfmetrics._fonts.values()] else 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'NotoSansKR'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
