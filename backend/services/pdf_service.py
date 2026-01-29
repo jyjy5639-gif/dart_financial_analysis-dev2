@@ -30,7 +30,7 @@ class PDFService:
             font_paths = [
                 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Render 경로
                 "C:/Windows/Fonts/malgun.ttf",
-                "/System/Library/Fonts/AppleGothic.ttf",
+                "C:/Windows/Fonts/Noto Sans KR.ttf",
                 "/usr/share/fonts/truetype/noto-cjk/NotoSansCJK-Regular.ttc",
             ]
             

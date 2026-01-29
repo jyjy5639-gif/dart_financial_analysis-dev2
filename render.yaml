@@ -2,8 +2,17 @@ services:
   - type: web
     name: dart-backend
     env: python
-    buildCommand: pip install -r requirements.txt && apt-get update && apt-get install -y fonts-noto-cjk
+    buildCommand: |
+      export PYTHONIOENCODING=utf-8
+      pip install -r requirements.txt
+      apt-get update
+      apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
+      pip install -r requirements.txt
     startCommand: python run_backend.py
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12
+      - key: PYTHONIOENCODING
+        value: utf-8
+      - key: LANG
+        value: en_US.UTF-8
+      - key: LC_ALL
+        value: en_US.UTF-8
