@@ -29,7 +29,7 @@ class PDFService:
         try:
             # 1. 프로젝트 내 폰트 확인 (모든 환경에서 작동)
             project_root = Path(__file__).parent.parent.parent
-            project_font = project_root / "fonts" / "NotoSansKR-Regular.ttf"
+            project_font = project_root / "fonts" / "NotoSansKR-Regular.otf"
             
             if project_font.exists():
                 pdfmetrics.registerFont(TTFont('NotoSansKR', str(project_font)))
@@ -40,8 +40,8 @@ class PDFService:
             
             # 2. Windows 경로 시도
             windows_paths = [
-                "C:/Windows/Fonts/NotoSansKR-Regular.ttf",
-                "C:/Windows/Fonts/NotoSansKR-Medium.ttf",
+                "C:/Windows/Fonts/NotoSansKR-Regular.otf",
+                "C:/Windows/Fonts/NotoSansKR-Medium.otf",
             ]
             for path in windows_paths:
                 if os.path.exists(path):
@@ -51,9 +51,9 @@ class PDFService:
             
             # 3. Linux 경로 시도
             linux_paths = [
-                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.ttf",
-                "/usr/share/fonts/noto/NotoSansKR-Regular.ttf",
-                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.ttf",
+                "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.otf",
+                "/usr/share/fonts/noto/NotoSansKR-Regular.otf",
+                "/usr/share/fonts/opentype/noto-cjk/NotoSansCJKkr-Regular.otf",
             ]
             for path in linux_paths:
                 if os.path.exists(path):
@@ -63,8 +63,8 @@ class PDFService:
             
             # 4. macOS 경로 시도
             mac_paths = [
-                "/Library/Fonts/NotoSansKR-Regular.ttf",
-                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.ttf",
+                "/Library/Fonts/NotoSansKR-Regular.otf",
+                f"{os.path.expanduser('~')}/Library/Fonts/NotoSansKR-Regular.otf",
             ]
             for path in mac_paths:
                 if os.path.exists(path):
@@ -74,8 +74,6 @@ class PDFService:
             
             print("⚠️ 경고: NotoSansKR 폰트를 찾을 수 없습니다.")
             print(f"   프로젝트 폰트 경로: {project_font}")
-            print(f"   프로젝트 루트 경로: {project_root}")
-            print(f"   현재 작업 디렉토리: {os.getcwd()}")
             
         except Exception as e:
             print(f"❌ PDFService 폰트 설정 오류: {e}")
@@ -194,7 +192,9 @@ class PDFService:
         story = []
         
         try:
-            story.append(Paragraph("시각적 분석", self.styles['KoreanHeading']))
+            # ✅ 수정: 제목 텍스트 정제
+            visual_analysis_title = self._sanitize_text_for_pdf("시각적 분석")
+            story.append(Paragraph(visual_analysis_title, self.styles['KoreanHeading']))
             
             # 단일 회사인 경우
             if 'companies' not in company_info or len(company_info.get('companies', [])) <= 1:
@@ -331,14 +331,26 @@ class PDFService:
             if stock_code and stock_code != 'N/A':
                 title += f" ({stock_code})"
         
+        # ✅ 수정: 제목 텍스트 정제
+        title = self._sanitize_text_for_pdf(title)
         story.append(Paragraph(title, self.styles['KoreanTitle']))
         story.append(Spacer(1, 0.3*inch))
         
         # 메타데이터 테이블
+        # ✅ 수정: 모든 텍스트 정제
         metadata = [
-            ['생성일시', datetime.now().strftime('%Y년 %m월 %d일 %H:%M')],
-            ['분석 엔진', llm_provider],
-            ['분석 스타일', analysis_style],
+            [
+                self._sanitize_text_for_pdf('생성일시'),
+                self._sanitize_text_for_pdf(datetime.now().strftime('%Y년 %m월 %d일 %H:%M'))
+            ],
+            [
+                self._sanitize_text_for_pdf('분석 엔진'),
+                self._sanitize_text_for_pdf(str(llm_provider))
+            ],
+            [
+                self._sanitize_text_for_pdf('분석 스타일'),
+                self._sanitize_text_for_pdf(str(analysis_style))
+            ],
         ]
         
         meta_table = Table(metadata, colWidths=[3*cm, 8*cm])
@@ -363,18 +375,29 @@ class PDFService:
         """재무 요약 테이블 생성"""
         story = []
         
-        story.append(Paragraph("재무 현황 요약", self.styles['KoreanHeading']))
+        # ✅ 수정: 제목 텍스트 정제
+        financial_summary_title = self._sanitize_text_for_pdf("재무 현황 요약")
+        story.append(Paragraph(financial_summary_title, self.styles['KoreanHeading']))
         
         # 주요 지표 테이블
         if 'key_metrics' in financial_summary:
-            metrics_data = [['항목', '당기', '전기', '증감률']]
+            # ✅ 수정: 테이블 헤더 정제
+            metrics_data = [
+                [
+                    self._sanitize_text_for_pdf('항목'),
+                    self._sanitize_text_for_pdf('당기'),
+                    self._sanitize_text_for_pdf('전기'),
+                    self._sanitize_text_for_pdf('증감률')
+                ]
+            ]
             
             for metric in financial_summary['key_metrics']:
+                # ✅ 수정: 테이블 내용도 정제
                 metrics_data.append([
-                    metric['name'],
-                    metric.get('current', '-'),
-                    metric.get('previous', '-'),
-                    metric.get('change_rate', '-')
+                    self._sanitize_text_for_pdf(str(metric['name'])),
+                    self._sanitize_text_for_pdf(str(metric.get('current', '-'))),
+                    self._sanitize_text_for_pdf(str(metric.get('previous', '-'))),
+                    self._sanitize_text_for_pdf(str(metric.get('change_rate', '-')))
                 ])
             
             metrics_table = Table(metrics_data, colWidths=[4*cm, 3*cm, 3*cm, 2*cm])
@@ -396,6 +419,9 @@ class PDFService:
     def _sanitize_text_for_pdf(self, text: str) -> str:
         """텍스트를 PDF에 안전하게 변환 (HTML 태그 제거)"""
         import re
+        
+        # 문자열로 변환 (None이나 다른 타입일 수 있음)
+        text = str(text) if text is not None else ""
         
         # XML/HTML 특수 문자 이스케이프
         text = text.replace('&', '&amp;')
@@ -441,7 +467,9 @@ class PDFService:
         import re
         story = []
         
-        story.append(Paragraph("AI 분석 리포트", self.styles['KoreanHeading']))
+        # ✅ 수정: 제목 텍스트 정제
+        ai_report_title = self._sanitize_text_for_pdf("AI 분석 리포트")
+        story.append(Paragraph(ai_report_title, self.styles['KoreanHeading']))
         
         # 텍스트를 줄 단위로 분할하여 처리
         lines = briefing_text.split('\n')
@@ -540,7 +568,8 @@ class PDFService:
         story.append(HRFlowable(width="100%", thickness=1, color=HexColor('#e0e0e0')))
         story.append(Spacer(1, 0.1*inch))
         
-        footer_text = "※ 본 분석 리포트는 AI에 의해 자동 생성된 것으로, 투자 결정의 참고자료로만 활용하시기 바랍니다."
+        # ✅ 수정: 푸터 텍스트도 정제
+        footer_text = self._sanitize_text_for_pdf("※ 본 분석 리포트는 AI에 의해 자동 생성된 것으로, 투자 결정의 참고자료로만 활용하시기 바랍니다.")
         story.append(Paragraph(footer_text, self.styles['Metadata']))
         
         return story
