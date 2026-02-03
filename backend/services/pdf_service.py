@@ -135,7 +135,7 @@ class PDFService:
         financial_summary: Optional[Dict] = None,
         llm_provider: str = "AI",
         analysis_style: str = "standard",
-        include_charts: bool = False
+        include_charts: bool = True
     ) -> BytesIO:
         """
         AI 브리핑 PDF 생성 (차트 포함)

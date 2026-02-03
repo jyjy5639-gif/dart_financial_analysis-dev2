@@ -10,21 +10,25 @@ from io import BytesIO
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+from matplotlib.font_manager import FontProperties
 import seaborn as sns
 import numpy as np
 
 
 # ===== 🔧 전역 폰트 설정 (정확한 경로 계산) =====
+KOREAN_FONT_PATH = None  # 전역 변수로 폰트 경로 저장
+
 def _initialize_matplotlib_fonts():
     """프로그램 시작 시 matplotlib 폰트를 한 번만 설정"""
+    global KOREAN_FONT_PATH
     print("=" * 70)
     print("🔧 Matplotlib 글로벌 폰트 초기화")
     print("=" * 70)
-    
+
     plt.rcParams['axes.unicode_minus'] = False
     current_system = platform.system()
     print(f"현재 OS: {current_system}")
-    
+
     font_registered = False
     
     # ✅ 방법 1: 현재 파일의 정확한 위치로부터 경로 계산
@@ -52,9 +56,11 @@ def _initialize_matplotlib_fonts():
             print(f"파일 크기: {project_font_ttf.stat().st_size} bytes")
             try:
                 fm.fontManager.addfont(str(project_font_ttf))
-                plt.rcParams['font.family'] = 'NotoSansKR'
+                plt.rcParams['font.family'] = ['NotoSansKR']
+                KOREAN_FONT_PATH = str(project_font_ttf)
                 font_registered = True
                 print(f"\n✅ 폰트 로드 성공!")
+                print(f"폰트 경로 저장: {KOREAN_FONT_PATH}")
                 print("=" * 70)
                 return
             except Exception as e:
@@ -76,9 +82,11 @@ def _initialize_matplotlib_fonts():
         if project_font_otf.exists():
             try:
                 fm.fontManager.addfont(str(project_font_otf))
-                plt.rcParams['font.family'] = 'NotoSansKR'
+                plt.rcParams['font.family'] = ['NotoSansKR']
+                KOREAN_FONT_PATH = str(project_font_otf)
                 font_registered = True
                 print(f"✅ OTF 폰트 로드 성공!")
+                print(f"폰트 경로 저장: {KOREAN_FONT_PATH}")
                 print("=" * 70)
                 return
             except Exception as e:
@@ -99,9 +107,11 @@ def _initialize_matplotlib_fonts():
             if os.path.exists(path):
                 try:
                     fm.fontManager.addfont(path)
-                    plt.rcParams['font.family'] = 'NotoSansKR'
+                    plt.rcParams['font.family'] = ['NotoSansKR']
+                    KOREAN_FONT_PATH = path
                     font_registered = True
                     print(f"   ✅ 폰트 로드 성공!")
+                    print(f"   폰트 경로 저장: {KOREAN_FONT_PATH}")
                     print("=" * 70)
                     return
                 except Exception as e:
@@ -120,9 +130,11 @@ def _initialize_matplotlib_fonts():
             if os.path.exists(path):
                 try:
                     fm.fontManager.addfont(path)
-                    plt.rcParams['font.family'] = 'NotoSansKR'
+                    plt.rcParams['font.family'] = ['NotoSansKR']
+                    KOREAN_FONT_PATH = path
                     font_registered = True
                     print(f"   ✅ 폰트 로드 성공!")
+                    print(f"   폰트 경로 저장: {KOREAN_FONT_PATH}")
                     print("=" * 70)
                     return
                 except Exception as e:
@@ -141,9 +153,11 @@ def _initialize_matplotlib_fonts():
             if os.path.exists(path):
                 try:
                     fm.fontManager.addfont(path)
-                    plt.rcParams['font.family'] = 'NotoSansKR'
+                    plt.rcParams['font.family'] = ['NotoSansKR']
+                    KOREAN_FONT_PATH = path
                     font_registered = True
                     print(f"   ✅ 폰트 로드 성공!")
+                    print(f"   폰트 경로 저장: {KOREAN_FONT_PATH}")
                     print("=" * 70)
                     return
                 except Exception as e:
@@ -163,10 +177,18 @@ _initialize_matplotlib_fonts()
 
 class ChartService:
     """재무 데이터 시각화 서비스 - 모든 환경 지원"""
-    
+
     def __init__(self):
         # matplotlib은 이미 전역에서 설정됨
         self._setup_plotly()
+
+        # 한글 폰트 객체 생성 (명시적 사용)
+        if KOREAN_FONT_PATH:
+            self.korean_font = FontProperties(fname=KOREAN_FONT_PATH)
+            print(f"✅ ChartService: 한글 폰트 객체 생성 완료 ({KOREAN_FONT_PATH})")
+        else:
+            self.korean_font = None
+            print("⚠️ ChartService: 한글 폰트를 찾을 수 없습니다.")
     
     def _setup_plotly(self):
         """Plotly 기본 설정"""
@@ -259,27 +281,35 @@ class ChartService:
     def _create_matplotlib_trend_chart(self, chart_data: Dict, years: List[str], accounts: List[str]) -> str:
         """Matplotlib 트렌드 차트 생성"""
         fig = plt.figure(figsize=(10, 6))
-        
+
         for i, account in enumerate(accounts):
             if account in chart_data:
-                plt.plot(years, chart_data[account], 
-                        marker='o', linewidth=2, markersize=6, 
+                plt.plot(years, chart_data[account],
+                        marker='o', linewidth=2, markersize=6,
                         label=account, color=self.color_sequence[i % len(self.color_sequence)])
-        
-        plt.title('주요 재무지표 추이 (단위: 억원)', fontsize=14, fontweight='bold', pad=20)
-        plt.xlabel('연도', fontsize=12)
-        plt.ylabel('금액 (억원)', fontsize=12)
-        plt.legend(loc='upper left')
+
+        # 한글 폰트 명시적 지정
+        if self.korean_font:
+            plt.title('주요 재무지표 추이 (단위: 억원)', fontsize=14, fontweight='bold', pad=20, fontproperties=self.korean_font)
+            plt.xlabel('연도', fontsize=12, fontproperties=self.korean_font)
+            plt.ylabel('금액 (억원)', fontsize=12, fontproperties=self.korean_font)
+            plt.legend(loc='upper left', prop=self.korean_font)
+        else:
+            plt.title('주요 재무지표 추이 (단위: 억원)', fontsize=14, fontweight='bold', pad=20)
+            plt.xlabel('연도', fontsize=12)
+            plt.ylabel('금액 (억원)', fontsize=12)
+            plt.legend(loc='upper left')
+
         plt.grid(True, alpha=0.3)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        
+
         buffer = BytesIO()
         plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
         buffer.seek(0)
         image_base64 = base64.b64encode(buffer.read()).decode()
         plt.close(fig)
-        
+
         return image_base64
     
     def create_ratio_chart(self, ratios: Dict, chart_type: str = "plotly") -> str:
@@ -323,34 +353,51 @@ class ChartService:
     def _create_matplotlib_ratio_chart(self, ratios: Dict) -> str:
         """Matplotlib 비율 차트 생성"""
         fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-        fig.suptitle('주요 재무비율 비교', fontsize=14, fontweight='bold')
-        
+
+        # 한글 폰트 명시적 지정
+        if self.korean_font:
+            fig.suptitle('주요 재무비율 비교', fontsize=14, fontweight='bold', fontproperties=self.korean_font)
+        else:
+            fig.suptitle('주요 재무비율 비교', fontsize=14, fontweight='bold')
+
         axes = axes.flatten()
         years = ['전전기', '전기', '당기']
-        
+
         for i, (ratio_name, values) in enumerate(ratios.items()):
             if i >= 4:
                 break
-            
+
             ratio_values = [values.get('bfefrmtrm', 0), values.get('frmtrm', 0), values.get('thstrm', 0)]
             bars = axes[i].bar(years, ratio_values, color=self.color_sequence[i % len(self.color_sequence)])
-            axes[i].set_title(ratio_name, fontweight='bold')
-            axes[i].set_ylabel('(%)')
+
+            # 한글 폰트 명시적 지정
+            if self.korean_font:
+                axes[i].set_title(ratio_name, fontweight='bold', fontproperties=self.korean_font)
+                axes[i].set_ylabel('(%)', fontproperties=self.korean_font)
+                axes[i].set_xticklabels(years, fontproperties=self.korean_font)
+            else:
+                axes[i].set_title(ratio_name, fontweight='bold')
+                axes[i].set_ylabel('(%)')
+
             axes[i].grid(True, alpha=0.3)
-            
+
             for bar, value in zip(bars, ratio_values):
                 height = bar.get_height()
-                axes[i].text(bar.get_x() + bar.get_width()/2., height,
-                           f'{value:.1f}%', ha='center', va='bottom')
-        
+                if self.korean_font:
+                    axes[i].text(bar.get_x() + bar.get_width()/2., height,
+                               f'{value:.1f}%', ha='center', va='bottom', fontproperties=self.korean_font)
+                else:
+                    axes[i].text(bar.get_x() + bar.get_width()/2., height,
+                               f'{value:.1f}%', ha='center', va='bottom')
+
         plt.tight_layout()
-        
+
         buffer = BytesIO()
         plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
         buffer.seek(0)
         image_base64 = base64.b64encode(buffer.read()).decode()
         plt.close(fig)
-        
+
         return image_base64
     
     def create_comparison_chart(self, companies_data: Dict, chart_type: str = "plotly") -> str:
@@ -401,37 +448,51 @@ class ChartService:
     def _create_matplotlib_comparison_chart(self, comparison_data: Dict, accounts: List[str], company_names: List[str]) -> str:
         """Matplotlib 비교 차트 생성"""
         fig, ax = plt.subplots(figsize=(12, 6))
-        
+
         x = np.arange(len(accounts))
         width = 0.35 if len(company_names) == 2 else 0.25
-        
+
         for i, company in enumerate(company_names):
             offset = (i - len(company_names)/2 + 0.5) * width
-            bars = ax.bar(x + offset, comparison_data[company], width, 
+            bars = ax.bar(x + offset, comparison_data[company], width,
                          label=company, color=self.color_sequence[i % len(self.color_sequence)])
-            
+
             for bar in bars:
                 height = bar.get_height()
                 if height > 0:
-                    ax.text(bar.get_x() + bar.get_width()/2., height,
-                           f'{height:.0f}', ha='center', va='bottom', fontsize=9)
-        
-        ax.set_title('회사별 주요 재무지표 비교 (단위: 억원)', fontweight='bold', pad=20)
-        ax.set_xlabel('재무 지표')
-        ax.set_ylabel('금액 (억원)')
-        ax.set_xticks(x)
-        ax.set_xticklabels(accounts)
-        ax.legend()
+                    if self.korean_font:
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
+                               f'{height:.0f}', ha='center', va='bottom', fontsize=9, fontproperties=self.korean_font)
+                    else:
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
+                               f'{height:.0f}', ha='center', va='bottom', fontsize=9)
+
+        # 한글 폰트 명시적 지정
+        if self.korean_font:
+            ax.set_title('회사별 주요 재무지표 비교 (단위: 억원)', fontweight='bold', pad=20, fontproperties=self.korean_font)
+            ax.set_xlabel('재무 지표', fontproperties=self.korean_font)
+            ax.set_ylabel('금액 (억원)', fontproperties=self.korean_font)
+            ax.set_xticks(x)
+            ax.set_xticklabels(accounts, fontproperties=self.korean_font)
+            ax.legend(prop=self.korean_font)
+        else:
+            ax.set_title('회사별 주요 재무지표 비교 (단위: 억원)', fontweight='bold', pad=20)
+            ax.set_xlabel('재무 지표')
+            ax.set_ylabel('금액 (억원)')
+            ax.set_xticks(x)
+            ax.set_xticklabels(accounts)
+            ax.legend()
+
         ax.grid(True, alpha=0.3)
-        
+
         plt.tight_layout()
-        
+
         buffer = BytesIO()
         plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
         buffer.seek(0)
         image_base64 = base64.b64encode(buffer.read()).decode()
         plt.close(fig)
-        
+
         return image_base64
     
     def create_ratio_comparison_chart(self, companies_data: Dict, chart_type: str = "plotly") -> str:
@@ -478,35 +539,49 @@ class ChartService:
     def _create_matplotlib_ratio_comparison_chart(self, comparison_data: Dict, ratios: List[str], company_names: List[str]) -> str:
         """Matplotlib 비율 비교 차트 생성"""
         fig, ax = plt.subplots(figsize=(10, 6))
-        
+
         x = np.arange(len(ratios))
         width = 0.35 if len(company_names) == 2 else 0.25
-        
+
         for i, company in enumerate(company_names):
             offset = (i - len(company_names)/2 + 0.5) * width
-            bars = ax.bar(x + offset, comparison_data[company], width, 
+            bars = ax.bar(x + offset, comparison_data[company], width,
                          label=company, color=self.color_sequence[i % len(self.color_sequence)])
-            
+
             for bar in bars:
                 height = bar.get_height()
                 if height > 0:
-                    ax.text(bar.get_x() + bar.get_width()/2., height,
-                           f'{height:.1f}%', ha='center', va='bottom', fontsize=9)
-        
-        ax.set_title('회사별 주요 재무비율 비교', fontweight='bold', pad=20)
-        ax.set_xlabel('재무 비율')
-        ax.set_ylabel('비율 (%)')
-        ax.set_xticks(x)
-        ax.set_xticklabels(ratios)
-        ax.legend()
+                    if self.korean_font:
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
+                               f'{height:.1f}%', ha='center', va='bottom', fontsize=9, fontproperties=self.korean_font)
+                    else:
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
+                               f'{height:.1f}%', ha='center', va='bottom', fontsize=9)
+
+        # 한글 폰트 명시적 지정
+        if self.korean_font:
+            ax.set_title('회사별 주요 재무비율 비교', fontweight='bold', pad=20, fontproperties=self.korean_font)
+            ax.set_xlabel('재무 비율', fontproperties=self.korean_font)
+            ax.set_ylabel('비율 (%)', fontproperties=self.korean_font)
+            ax.set_xticks(x)
+            ax.set_xticklabels(ratios, fontproperties=self.korean_font)
+            ax.legend(prop=self.korean_font)
+        else:
+            ax.set_title('회사별 주요 재무비율 비교', fontweight='bold', pad=20)
+            ax.set_xlabel('재무 비율')
+            ax.set_ylabel('비율 (%)')
+            ax.set_xticks(x)
+            ax.set_xticklabels(ratios)
+            ax.legend()
+
         ax.grid(True, alpha=0.3)
-        
+
         plt.tight_layout()
-        
+
         buffer = BytesIO()
         plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
         buffer.seek(0)
         image_base64 = base64.b64encode(buffer.read()).decode()
         plt.close(fig)
-        
+
         return image_base64

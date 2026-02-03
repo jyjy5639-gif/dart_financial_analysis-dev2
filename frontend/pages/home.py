@@ -9,8 +9,28 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from api_client import APIClient
 
-# icon_path 정의
-icon_path = Path(__file__).parent.parent / "static" / "fine.png"
+# icon_path 정의 (프로젝트 루트의 static 폴더)
+icon_path = Path(__file__).parent.parent.parent / "static" / "fine.png"
+
+# 페이지 설정 (반드시 첫 번째 st 명령이어야 함)
+try:
+    if icon_path.exists():
+        st.set_page_config(
+            page_title="DART 재무정보 분석",
+            page_icon=str(icon_path),
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+    else:
+        st.set_page_config(
+            page_title="DART 재무정보 분석",
+            page_icon="📊",
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+except Exception as e:
+    # 이미 set_page_config가 호출된 경우 무시
+    pass
 
 # 헬퍼 함수: 유효한 API 키인지 확인
 def is_valid_api_key(key):

@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# icon_path 정의
-icon_path = Path(__file__).parent / "static" / "fine.png"
+# icon_path 정의 (프로젝트 루트의 static 폴더)
+icon_path = Path(__file__).parent.parent / "static" / "fine.png"
 
 st.set_page_config(
     page_title="화인 DART 재무정보 분석기",

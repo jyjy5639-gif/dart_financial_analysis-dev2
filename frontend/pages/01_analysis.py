@@ -14,7 +14,7 @@ from plotly.subplots import make_subplots
 
 st.set_page_config(
     page_title="화인 DART 재무정보 분석기",
-    page_icon=str(Path(__file__).parent.parent / "static" / "fine_icon.ico"),
+    page_icon=str(Path(__file__).parent.parent.parent / "static" / "fine_icon.ico"),
     layout="wide"
 )
 
