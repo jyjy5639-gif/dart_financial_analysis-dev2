@@ -370,7 +370,7 @@ def display_single_company(companies_data):
         fs_div = corp_data.get('fs_div', '')
 
         with st.expander("**{}** ({}년 {})".format(corp_data['corp_name'], bsns_year, fs_div), expanded=True):
-            tab1, tab2, tab3, tab4 = st.tabs(["📊 주요 지표", "📈 재무 비율", "📋 상세 내역", "📰 공시 목록"])
+            tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 주요 지표", "📈 재무 비율", "📋 상세 내역", "💹 주가 정보", "📰 공시 목록"])
 
             with tab1:
                 trend_fig = create_trend_chart(corp_data['financial_data'])
@@ -426,6 +426,128 @@ def display_single_company(companies_data):
                     st.dataframe(df, use_container_width=True, hide_index=True)
 
             with tab4:
+                st.markdown("**💹 주가 정보**")
+                stock_code = corp_data.get('stock_code', '')
+                if stock_code and stock_code != 'N/A':
+                    try:
+                        # bsns_year를 정수로 변환하여 전달
+                        bsns_year_int = int(bsns_year) if bsns_year else None
+                        stock_info = api_client.get_stock_info(
+                            corp_code=corp_data['corp_code'],
+                            stock_code=stock_code,
+                            corp_name=corp_data['corp_name'],
+                            api_key=st.session_state.dart_api_key,
+                            bsns_year=bsns_year_int
+                        )
+
+                        if stock_info.get('status') in ['success', 'partial']:
+                            formatted = stock_info.get('formatted', {})
+
+                            # 기준일자 표시
+                            if formatted.get('data_date') and formatted.get('data_date') != '-':
+                                st.caption("📅 기준일: {}".format(formatted.get('data_date')))
+
+                            # 현재가 및 등락 정보
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                change_val = formatted.get('change_value', 0)
+                                delta_color = "normal" if change_val >= 0 else "inverse"
+                                st.metric(
+                                    "현재가",
+                                    formatted.get('current_price', '-'),
+                                    formatted.get('change', '-'),
+                                    delta_color=delta_color
+                                )
+                            with col2:
+                                st.metric("거래량", formatted.get('volume', '-'))
+                            with col3:
+                                st.metric("시가총액", formatted.get('market_cap', '-'))
+
+                            st.divider()
+
+                            # 52주 최고/최저
+                            st.markdown("**📊 52주 가격 범위**")
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("52주 최저", formatted.get('low_52week', '-'))
+                            with col2:
+                                current = stock_info.get('price', 0)
+                                high52 = stock_info.get('high_52week', 0)
+                                low52 = stock_info.get('low_52week', 0)
+                                if high52 and low52 and current:
+                                    position = ((current - low52) / (high52 - low52)) * 100
+                                    st.metric("현재 위치", "{:.1f}%".format(position))
+                                else:
+                                    st.metric("현재 위치", "-")
+                            with col3:
+                                st.metric("52주 최고", formatted.get('high_52week', '-'))
+
+                            st.divider()
+
+                            # 당일 시세 테이블
+                            st.markdown("**📋 당일 시세**")
+                            day_data = [
+                                {'항목': '시가', '가격': formatted.get('open_price', '-')},
+                                {'항목': '고가', '가격': formatted.get('high_price', '-')},
+                                {'항목': '저가', '가격': formatted.get('low_price', '-')},
+                                {'항목': '전일종가', '가격': formatted.get('prev_close', '-')},
+                            ]
+                            df = pd.DataFrame(day_data)
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+
+                            # 상장주식수
+                            if formatted.get('shares') and formatted.get('shares') != '-':
+                                st.caption("상장주식수: {}".format(formatted.get('shares')))
+
+                            st.divider()
+
+                            # 투자 지표 (KRX 공식 데이터)
+                            st.markdown("**📈 투자 지표 (KRX 기준)**")
+
+                            # 컬럼명 동적 생성
+                            year_end_col = formatted.get('year_end_label', '년말 지표')
+                            current_col = formatted.get('data_date_label', '값')
+
+                            valuation_data = [
+                                {
+                                    '지표': 'PER (주가수익비율)',
+                                    year_end_col: formatted.get('year_end_per', '-'),
+                                    current_col: formatted.get('per', '-')
+                                },
+                                {
+                                    '지표': 'PBR (주가순자산비율)',
+                                    year_end_col: formatted.get('year_end_pbr', '-'),
+                                    current_col: formatted.get('pbr', '-')
+                                },
+                                {
+                                    '지표': 'EPS (주당순이익)',
+                                    year_end_col: formatted.get('year_end_eps', '-'),
+                                    current_col: formatted.get('eps', '-')
+                                },
+                                {
+                                    '지표': 'BPS (주당순자산)',
+                                    year_end_col: formatted.get('year_end_bps', '-'),
+                                    current_col: formatted.get('bps', '-')
+                                },
+                                {
+                                    '지표': '배당수익률',
+                                    year_end_col: formatted.get('year_end_div_yield', '-'),
+                                    current_col: formatted.get('div_yield', '-')
+                                },
+                            ]
+                            df_valuation = pd.DataFrame(valuation_data)
+                            st.dataframe(df_valuation, use_container_width=True, hide_index=True)
+                            st.caption("※ KRX 한국거래소 제공 데이터")
+
+                        else:
+                            st.warning("⚠️ 주가 정보를 조회할 수 없습니다: {}".format(stock_info.get('message', '알 수 없는 오류')))
+
+                    except Exception as e:
+                        st.error("❌ 주가 조회 실패: {}".format(str(e)))
+                else:
+                    st.info("ℹ️ 비상장 회사는 주가 정보가 제공되지 않습니다.")
+
+            with tab5:
                 st.markdown("**📰 공시 목록**")
                 try:
                     disclosure_response = api_client.get_disclosures(
@@ -475,8 +597,8 @@ def display_year_by_year_comparison(companies_data):
     
     sorted_years = sorted(all_years, reverse=True)
     
-    # Create 4 tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 주요 지표", "📈 재무 비율", "📋 상세 내역", "📰 공시 목록"])
+    # Create 5 tabs
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 주요 지표", "📈 재무 비율", "📋 상세 내역", "💹 주가 정보", "📰 공시 목록"])
     
     # Tab 1: Main Indicators
     with tab1:
@@ -595,13 +717,105 @@ def display_year_by_year_comparison(companies_data):
             
             st.divider()
     
-    # Tab 4: Disclosure List
+    # Tab 4: Stock Price Info
     with tab4:
+        st.markdown("**💹 주가 정보 비교**")
+        cols = st.columns(len(companies_data))
+
+        for col_idx, (corp_code, corp_data) in enumerate(companies_data.items()):
+            with cols[col_idx]:
+                st.markdown("**{}**".format(corp_data['corp_name']))
+                stock_code = corp_data.get('stock_code', '')
+                bsns_year = corp_data.get('bsns_year', '')
+
+                if stock_code and stock_code != 'N/A':
+                    try:
+                        # bsns_year를 정수로 변환하여 전달
+                        bsns_year_int = int(bsns_year) if bsns_year else None
+                        stock_info = api_client.get_stock_info(
+                            corp_code=corp_code,
+                            stock_code=stock_code,
+                            corp_name=corp_data['corp_name'],
+                            api_key=st.session_state.dart_api_key,
+                            bsns_year=bsns_year_int
+                        )
+
+                        if stock_info.get('status') in ['success', 'partial']:
+                            formatted = stock_info.get('formatted', {})
+
+                            # 기준일자 표시
+                            if formatted.get('data_date') and formatted.get('data_date') != '-':
+                                st.caption("📅 {}".format(formatted.get('data_date')))
+
+                            # 현재가 및 등락
+                            change_val = formatted.get('change_value', 0)
+                            delta_color = "normal" if change_val >= 0 else "inverse"
+                            st.metric(
+                                "현재가",
+                                formatted.get('current_price', '-'),
+                                formatted.get('change', '-'),
+                                delta_color=delta_color
+                            )
+                            st.metric("거래량", formatted.get('volume', '-'))
+                            st.metric("시가총액", formatted.get('market_cap', '-'))
+
+                            st.divider()
+
+                            # 52주 정보
+                            st.caption("52주 범위")
+                            st.write(formatted.get('week52_range', '-'))
+
+                            # 당일 시세
+                            st.caption("당일 시세")
+                            day_data = [
+                                {'항목': '시가', '가격': formatted.get('open_price', '-')},
+                                {'항목': '고가', '가격': formatted.get('high_price', '-')},
+                                {'항목': '저가', '가격': formatted.get('low_price', '-')},
+                            ]
+                            df = pd.DataFrame(day_data)
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+
+                            # 투자 지표 (KRX 공식 데이터)
+                            st.divider()
+                            st.caption("투자 지표 (KRX 기준)")
+
+                            # 연말 지표와 현재 지표 비교 표시
+                            year_end_label = formatted.get('year_end_label', '년말')
+                            st.write("**{}**".format(year_end_label))
+                            st.write("PER: {} | PBR: {}".format(
+                                formatted.get('year_end_per', '-'),
+                                formatted.get('year_end_pbr', '-')
+                            ))
+                            st.write("EPS: {} | BPS: {}".format(
+                                formatted.get('year_end_eps', '-'),
+                                formatted.get('year_end_bps', '-')
+                            ))
+
+                            st.write("**현재**")
+                            st.write("PER: {} | PBR: {}".format(
+                                formatted.get('per', '-'),
+                                formatted.get('pbr', '-')
+                            ))
+                            st.write("EPS: {} | BPS: {}".format(
+                                formatted.get('eps', '-'),
+                                formatted.get('bps', '-')
+                            ))
+
+                        else:
+                            st.warning("주가 정보 없음")
+
+                    except Exception as e:
+                        st.error("조회 실패: {}".format(str(e)))
+                else:
+                    st.info("비상장 회사")
+
+    # Tab 5: Disclosure List
+    with tab5:
         for corp_code, corp_data in companies_data.items():
             st.subheader(corp_data['corp_name'])
-            
+
             bsns_year = corp_data.get('bsns_year', '')
-            
+
             try:
                 disclosure_response = api_client.get_disclosures(
                     corp_code=corp_code,
@@ -653,6 +867,78 @@ if 'current_step' not in st.session_state:
     st.session_state.current_step = 1
 if 'search_page' not in st.session_state:
     st.session_state.search_page = 0
+
+# 여백 축소 CSS 적용
+st.markdown("""
+<style>
+    /* 블록 요소들 사이 간격 축소 */
+    .stMarkdown, .stDataFrame, .stMetric, .stPlotlyChart {
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 구분선 마진 축소 */
+    hr {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* 탭 내부 패딩 축소 */
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: 0.5rem !important;
+    }
+
+    /* expander 내부 패딩 축소 */
+    .streamlit-expanderContent {
+        padding-top: 0.3rem !important;
+        padding-bottom: 0.3rem !important;
+    }
+
+    /* metric 컴포넌트 간격 축소 */
+    [data-testid="stMetricValue"] {
+        font-size: 1.3rem !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 0.8rem !important;
+    }
+    div[data-testid="metric-container"] {
+        padding: 0.3rem 0 !important;
+    }
+
+    /* 컬럼 간격 축소 */
+    [data-testid="column"] {
+        padding: 0 0.3rem !important;
+    }
+
+    /* 서브헤더 마진 축소 */
+    h2, h3 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* caption 마진 축소 */
+    .stCaption {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+
+    /* dataframe 마진 축소 */
+    .stDataFrame {
+        margin-top: 0.2rem !important;
+    }
+
+    /* info/warning/error 박스 마진 축소 */
+    .stAlert {
+        padding: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 버튼 그룹 간격 */
+    .stButton {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # API client
 @st.cache_resource
@@ -717,7 +1003,11 @@ if st.session_state.current_step == 1:
                     st.markdown("⚪ 비상장")
             with col4:
                 if st.button("제거", key="del_{}".format(i), type="secondary"):
-                    st.session_state.selected_companies.pop(i)
+                    removed_company = st.session_state.selected_companies.pop(i)
+                    # 해당 기업의 재무 데이터도 함께 삭제
+                    corp_code = removed_company.get('corp_code')
+                    if corp_code and corp_code in st.session_state.financial_results:
+                        del st.session_state.financial_results[corp_code]
                     st.rerun()
         st.divider()
     
@@ -1065,6 +1355,8 @@ elif st.session_state.current_step == 2:
     col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
         if st.button("← 이전 단계", use_container_width=True, type="secondary"):
+            # 이전 단계로 돌아갈 때 재무 데이터 초기화 (기업 재선택 시 혼동 방지)
+            st.session_state.financial_results = {}
             st.session_state.current_step = 1
             st.rerun()
     with col3:

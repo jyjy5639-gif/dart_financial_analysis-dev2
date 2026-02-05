@@ -14,6 +14,9 @@ aiohttp==3.11.11
 pandas==2.2.3
 openpyxl==3.1.5
 
+# Stock Data (KRX)
+pykrx==1.2.3
+
 # LLM Providers
 google-generativeai==0.8.3
 openai==1.57.2
@@ -35,6 +38,13 @@ streamlit==1.41.1
 # PDF Generation
 reportlab==4.2.5
 weasyprint==63.1
+
+# PDF Parsing
+pypdf==5.1.0
+pdfplumber==0.11.4
+pdfminer.six==20231228
+pymupdf==1.24.14
+camelot-py==0.11.0
 
 # Visualization
 plotly==5.23.0

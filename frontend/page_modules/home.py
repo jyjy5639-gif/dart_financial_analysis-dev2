@@ -45,6 +45,62 @@ if 'selected_companies' not in st.session_state:
 if 'financial_results' not in st.session_state:
     st.session_state.financial_results = {}
 
+# 여백 축소 CSS 적용
+st.markdown("""
+<style>
+    /* 블록 요소들 사이 간격 축소 */
+    .stMarkdown, .stDataFrame, .stMetric {
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 구분선 마진 축소 */
+    hr {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* expander 내부 패딩 축소 */
+    .streamlit-expanderContent {
+        padding-top: 0.3rem !important;
+        padding-bottom: 0.3rem !important;
+    }
+
+    /* 컬럼 간격 축소 */
+    [data-testid="column"] {
+        padding: 0 0.3rem !important;
+    }
+
+    /* 서브헤더 마진 축소 */
+    h2, h3 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* caption 마진 축소 */
+    .stCaption {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+
+    /* info/warning/error 박스 마진 축소 */
+    .stAlert {
+        padding: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 버튼 그룹 간격 */
+    .stButton {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* 텍스트 입력 필드 마진 */
+    .stTextInput {
+        margin-bottom: 0.3rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 로고 및 헤더
 try:
     logo_path = Path(__file__).parent.parent.parent / "static" / "fine.png"
@@ -220,6 +276,12 @@ with col2:
         st.info("미설정 (AI 브리핑 사용 불가)")
         st.caption("최소 1개의 LLM API 키를 설정하세요")
 
+# 재무 분석 페이지로 이동 버튼
+st.divider()
+col1, col2, col3 = st.columns([1, 1, 1])
+with col2:
+    if st.button("📊 재무 분석으로 이동", use_container_width=True, type="primary"):
+        st.switch_page("page_modules/01_analysis.py")
 # 전체 초기화 버튼
 st.divider()
 col1, col2, col3 = st.columns([1, 1, 1])
@@ -228,7 +290,7 @@ with col2:
         # DART API 키 초기화
         env_dart_key = os.getenv('DART_API_KEY', '')
         st.session_state.dart_api_key = env_dart_key if is_valid_api_key(env_dart_key) else ''
-        
+
         # LLM API 키 초기화
         st.session_state.llm_api_keys = {}
         for provider_id, env_var in [
@@ -239,15 +301,9 @@ with col2:
         ]:
             env_key = os.getenv(env_var, '')
             st.session_state.llm_api_keys[provider_id] = env_key if is_valid_api_key(env_key) else ''
-        
+
         st.success("환경 변수 값으로 초기화되었습니다")
         st.rerun()
-# 재무 분석 페이지로 이동 버튼
-st.divider()
-col1, col2, col3 = st.columns([1, 1, 1])
-with col2:
-    if st.button("📊 재무 분석으로 이동", use_container_width=True, type="primary"):
-        st.switch_page("page_modules/01_analysis.py")
 
 # 푸터
 st.divider()

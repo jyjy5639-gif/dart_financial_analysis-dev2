@@ -59,13 +59,16 @@ class APIClient:
         corp_code: str,
         stock_code: str,
         corp_name: Optional[str],
-        api_key: str
+        api_key: str,
+        bsns_year: Optional[int] = None
     ) -> dict:
         """주가 정보 조회"""
         params = {"stock_code": stock_code}
         if corp_name:
             params["corp_name"] = corp_name
-        
+        if bsns_year:
+            params["bsns_year"] = bsns_year
+
         response = requests.get(
             f"{self.base_url}/api/financial/{corp_code}/stock-info",
             params=params,
@@ -168,6 +171,29 @@ class APIClient:
                 "rcept_no": rcept_no,
                 "report_nm": report_nm
             },
+            headers=self._get_headers(api_key)
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def calc_per_pbr(
+        self,
+        corp_code: str,
+        stock_code: str,
+        corp_name: Optional[str],
+        financial_items: List[Dict],
+        api_key: str
+    ) -> dict:
+        """PER/PBR 계산"""
+        payload = {
+            "stock_code": stock_code,
+            "corp_name": corp_name,
+            "financial_items": financial_items
+        }
+
+        response = requests.post(
+            f"{self.base_url}/api/financial/{corp_code}/calc-per-pbr",
+            json=payload,
             headers=self._get_headers(api_key)
         )
         response.raise_for_status()

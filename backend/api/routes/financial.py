@@ -63,16 +63,61 @@ async def get_stock_info(
     corp_code: str,
     stock_code: str = Query(...),
     corp_name: str = Query(None),
+    bsns_year: Optional[int] = Query(None, description="business year for year-end indicators"),
     stock_service: StockService = Depends(get_stock_service)
 ):
     """Get stock information"""
     try:
-        logger.info('Fetching stock info: stock_code={}, corp_name={}'.format(stock_code, corp_name))
-        stock_info = stock_service.get_stock_info(stock_code, corp_name)
+        logger.info('Fetching stock info: stock_code={}, corp_name={}, bsns_year={}'.format(stock_code, corp_name, bsns_year))
+        stock_info = stock_service.get_stock_info(stock_code, corp_name, bsns_year)
         logger.info('Successfully fetched stock info for {}'.format(stock_code))
         return stock_info
     except Exception as e:
         logger.error('Failed to fetch stock info: {}'.format(str(e)), exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class CalcPerPbrRequest(BaseModel):
+    """PER/PBR calculation request"""
+    stock_code: str
+    corp_name: Optional[str] = None
+    financial_items: List[dict]
+
+
+@router.post("/{corp_code}/calc-per-pbr")
+async def calc_per_pbr(
+    corp_code: str,
+    request: CalcPerPbrRequest,
+    stock_service: StockService = Depends(get_stock_service)
+):
+    """Calculate PER/PBR using financial data and stock info"""
+    try:
+        logger.info('Calculating PER/PBR: corp_code={}, stock_code={}'.format(corp_code, request.stock_code))
+
+        # Get stock info
+        stock_info = stock_service.get_stock_info(request.stock_code, request.corp_name)
+
+        # Prepare financial data format
+        financial_data = {'items': request.financial_items}
+
+        # Calculate PER/PBR
+        result = stock_service.calc_per_pbr(financial_data, stock_info)
+
+        logger.info('PER/PBR calculation complete: PER={}, PBR={}'.format(
+            result.get('PER', {}).get('thstrm'),
+            result.get('PBR', {}).get('thstrm')
+        ))
+
+        return {
+            'success': True,
+            'per': result.get('PER'),
+            'pbr': result.get('PBR'),
+            'note': result.get('note'),
+            'stock_price': stock_info.get('price'),
+            'shares': stock_info.get('shares')
+        }
+    except Exception as e:
+        logger.error('Failed to calculate PER/PBR: {}'.format(str(e)), exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
